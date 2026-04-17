@@ -5,23 +5,9 @@ import Chip from '@mui/material/Chip';
 import { motion } from 'framer-motion';
 import { SPACING } from '../../styles/tokens';
 import { useTimelineSafe } from '../../contexts/TimelineContext';
+import { smoothstep } from '../../utils/timeBlend';
 
 const MotionBox = motion(Box);
-
-/**
- * 시간 값(0~1)을 Night 이미지의 opacity로 변환.
- * Day 이미지는 항상 베이스, Night 이미지를 위에 얹어 투명도 전환.
- *
- * smoothstep(3x² - 2x³) ease-in-out 매핑으로 중간 구간(0.4~0.6)에서
- * 두 이미지가 50/50으로 겹쳐 보이는 시간을 줄여 "흐릿한 더블 노출"을
- * 피한다. 같은 timeValue=0.5라도 선형보다 한쪽이 살짝 더 지배적이게 보인다.
- */
-const toNightOpacity = (value) => {
-  if (typeof value !== 'number') return 0;
-  if (value <= 0) return 0;
-  if (value >= 1) return 1;
-  return value * value * (3 - 2 * value);
-};
 
 /**
  * ProductCard 컴포넌트
@@ -92,7 +78,12 @@ const ProductCard = forwardRef(function ProductCard({
 
   const dayImage = resolved.images?.[0];
   const nightImage = resolved.images?.[1] ?? dayImage;
-  const nightOpacity = toNightOpacity(effectiveTimeValue);
+  /**
+   * smoothstep(timeValue) → Night 이미지 opacity.
+   * 사이트 전역 배경의 lerpHex도 같은 값을 섞는 비율로 써서 카드와 배경의
+   * 블렌드 비율이 모든 슬롯에서 일치한다.
+   */
+  const nightOpacity = smoothstep(effectiveTimeValue);
 
   /**
    * 시간이 깊어질수록 공간 전체가 살짝 가라앉는 감각을 주기 위해

@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import { defaultTheme, darkTheme } from '../src/styles/themes';
 import { TimelineProvider, useTimeline } from '../src/contexts/TimelineContext';
 import { TIME_SLOTS } from '../src/data/timeSlots';
+import { smoothstep, lerpHex } from '../src/utils/timeBlend';
 
 // Google Fonts 로드 (Material Symbols + 기본 폰트)
 const googleFonts = [
@@ -22,22 +23,24 @@ googleFonts.forEach((font) => {
 });
 
 /**
- * 내부 셸 — TimelineProvider 자식에서 현재 슬롯 theme을 구독해 MUI 테마 주입.
- * 추가로 palette.timeline[slotId].{bg,fg}를 Box에 적용해 4개 슬롯 톤을 통과하는
- * 연속 배경 블렌딩을 구현한다 (App.jsx의 ThemedShell과 동일 구조).
+ * 내부 셸 — ThemedShell(App.jsx)과 동일하게 smoothstep(timeValue) + lerpHex로
+ * 사이트 배경·전경을 계산해 ProductCard 이미지 블렌드 비율과 일치시킨다.
  */
 function StoryShell({ children }) {
-  const { theme, slot } = useTimeline();
+  const { theme, timeValue } = useTimeline();
   const activeTheme = theme === 'dark' ? darkTheme : defaultTheme;
-  const slotTokens = activeTheme.palette.timeline[slot.id];
+  const brand = activeTheme.palette.brand;
+  const blend = smoothstep(timeValue);
+  const bg = lerpHex(brand.wallTintWhite, brand.warmBlack, blend);
+  const fg = lerpHex(brand.warmBlack, brand.warmWhite, blend);
   return (
     <ThemeProvider theme={activeTheme}>
       <CssBaseline />
       <Box
         sx={{
           minHeight: '100vh',
-          backgroundColor: slotTokens.bg,
-          color: slotTokens.fg,
+          backgroundColor: bg,
+          color: fg,
           pt: 5,
           px: 2,
           '@media (prefers-reduced-motion: no-preference)': {
@@ -110,8 +113,16 @@ const preview = {
   decorators: [
     (Story, context) => {
       const slotId = context.globals.timeOfDay ?? TIME_SLOTS[0].id;
+      /**
+       * 양방향 싱크:
+       * - toolbar 변경 → globals.timeOfDay → slotId prop → Provider 업데이트
+       * - FloatingTimelineControl 등 하위 UI에서 setSlot 호출 → onChange → updateGlobals → toolbar 반영
+       */
       return (
-        <TimelineProvider slotId={slotId}>
+        <TimelineProvider
+          slotId={slotId}
+          onChange={(next) => context.updateGlobals({ timeOfDay: next })}
+        >
           <StoryShell>
             <Story />
           </StoryShell>

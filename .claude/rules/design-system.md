@@ -32,8 +32,11 @@ sx={{ p: 2, m: 3, gap: 1 }}
 ```
 
 #### 아이콘
-- @mui/icons-material, pixelarticons 아이콘 우선 사용
-- `src/stories/style/Icons.stories.jsx` 참고
+- **lucide-react**를 기본 아이콘노그래피로 사용
+- 기본 `strokeWidth={ 1 }`, 기본 `size={ 24 }`. 활성/강조 시 1.25~1.5로 올려 표현
+- `color="currentColor"` 권장 — 부모 `color` 토큰을 상속해 테마 전환 자동 반영
+- `src/stories/style/Icons.stories.jsx` 참고 (Playground / StrokeScale / Gallery)
+- `@mui/icons-material`·`pixelarticons`는 legacy로 취급하며 신규 코드 금지, 기존 사용처는 점진 교체
 
 ## 스타일링 규칙
 
