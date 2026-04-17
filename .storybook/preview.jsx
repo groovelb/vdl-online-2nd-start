@@ -1,9 +1,11 @@
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 import { defaultTheme, darkTheme } from '../src/styles/themes';
 import { TimelineProvider, useTimeline } from '../src/contexts/TimelineContext';
+import { CartProvider } from '../src/contexts/CartContext';
 import { TIME_SLOTS } from '../src/data/timeSlots';
 import { smoothstep, lerpHex } from '../src/utils/timeBlend';
 
@@ -114,19 +116,36 @@ const preview = {
     (Story, context) => {
       const slotId = context.globals.timeOfDay ?? TIME_SLOTS[0].id;
       /**
-       * 양방향 싱크:
+       * Router: react-router 훅(useNavigate/useParams 등)이 포함된 페이지·컴포넌트가
+       *   에러 없이 동작하도록 전역에서 MemoryRouter 제공. 특정 라우트 파라미터가 필요한
+       *   스토리는 parameters.router.initialEntries를 지정해 override 가능.
+       * Timeline 양방향 싱크:
        * - toolbar 변경 → globals.timeOfDay → slotId prop → Provider 업데이트
        * - FloatingTimelineControl 등 하위 UI에서 setSlot 호출 → onChange → updateGlobals → toolbar 반영
+       * Cart: CartDrawer·ShellCartButton 등이 자연스럽게 동작하도록 CartProvider도 감싼다.
        */
+      const initialEntries = context.parameters?.router?.initialEntries ?? ['/'];
+      const path = context.parameters?.router?.path;
+
       return (
-        <TimelineProvider
-          slotId={slotId}
-          onChange={(next) => context.updateGlobals({ timeOfDay: next })}
-        >
-          <StoryShell>
-            <Story />
-          </StoryShell>
-        </TimelineProvider>
+        <MemoryRouter initialEntries={initialEntries}>
+          <TimelineProvider
+            slotId={slotId}
+            onChange={(next) => context.updateGlobals({ timeOfDay: next })}
+          >
+            <CartProvider>
+              <StoryShell>
+                {path ? (
+                  <Routes>
+                    <Route path={path} element={<Story />} />
+                  </Routes>
+                ) : (
+                  <Story />
+                )}
+              </StoryShell>
+            </CartProvider>
+          </TimelineProvider>
+        </MemoryRouter>
       );
     },
   ],

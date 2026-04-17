@@ -1,7 +1,5 @@
-import { forwardRef, useMemo, useRef, useState } from 'react';
+import { forwardRef, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
 import { HorizontalScrollContainer } from '../content-transition/HorizontalScrollContainer';
 import VideoScrubbing from '../scroll/VideoScrubbing';
 import {
@@ -65,55 +63,20 @@ function ElevationSlide({
 }
 
 /**
- * 모바일용 수직 스택 슬라이드 — 섹션(200vh) 내 sticky 100vh 비디오, scrollY 기반 스크럽.
- */
-function MobileElevationSlide({ src }) {
-  const sectionRef = useRef(null);
-  return (
-    <Box
-      ref={ sectionRef }
-      component="section"
-      sx={ {
-        position: 'relative',
-        height: '200vh',
-        width: '100%',
-      } }
-    >
-      <Box
-        sx={ {
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          width: '100%',
-          overflow: 'hidden',
-        } }
-      >
-        <VideoScrubbing
-          src={ src }
-          containerRef={ sectionRef }
-          sx={ {
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          } }
-        />
-      </Box>
-    </Box>
-  );
-}
-
-/**
  * BrandElevationSection 컴포넌트
  *
  * Lumenstate "공간의 단면(Elevation)" 영상 3편을 텍스트 없이 풀블리드로 제시하는 섹션.
- * 데스크톱에서는 HorizontalScrollContainer로 세로 스크롤을 가로 이동에 매핑하고,
- * 각 슬라이드의 VideoScrubbing이 해당 구간 진행도로 프레임을 스크럽한다.
+ * **전 브레이크포인트 동일 방식** — HorizontalScrollContainer로 세로 스크롤을 가로 이동에
+ * 매핑하고, 각 슬라이드의 VideoScrubbing이 해당 구간 진행도로 프레임을 스크럽한다.
  * 슬라이드 간 간격 없이 한 화면에 하나의 영상만 풀 뷰포트로 노출된다.
+ *
+ * 모바일에서도 데스크톱과 동일하게 가로 스크롤로 진행하여 사용자 경험을 통일한다
+ * (과거 버전의 단계적 세로 스크롤 방식은 제거됨).
  *
  * Props:
  * @param {array} videos - 비디오 경로 배열. 3개 권장 [Optional, 기본값: elevation set1/2/3]
- * @param {string} slideWidth - 데스크톱 슬라이드 너비 (CSS 단위) [Optional, 기본값: '100vw']
- * @param {string} slideHeight - 데스크톱 슬라이드 높이 (CSS 단위) [Optional, 기본값: '100vh']
+ * @param {string} slideWidth - 슬라이드 너비 (CSS 단위) [Optional, 기본값: '100vw']
+ * @param {string} slideHeight - 슬라이드 높이 (CSS 단위) [Optional, 기본값: '100vh']
  * @param {string} gap - 슬라이드 간 간격 [Optional, 기본값: '0px']
  * @param {string} padding - HorizontalScrollContainer 좌우 패딩 [Optional, 기본값: '0px']
  * @param {object} sx - 외곽 래퍼 추가 스타일 [Optional]
@@ -131,8 +94,6 @@ const BrandElevationSection = forwardRef(function BrandElevationSection({
   ...props
 }, ref) {
   const [progress, setProgress] = useState(0);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   /**
    * 각 슬라이드의 로컬 진행도. 현재 활성 ±1만 preload='auto', 그 외는 'metadata'.
@@ -147,23 +108,6 @@ const BrandElevationSection = forwardRef(function BrandElevationSection({
       preload: Math.abs(i - activeIndex) <= 1 ? 'auto' : 'metadata',
     }));
   }, [progress, videos]);
-
-  if (isMobile) {
-    return (
-      <Box
-        ref={ ref }
-        { ...props }
-        sx={ {
-          width: '100%',
-          ...sx,
-        } }
-      >
-        { videos.map((src, i) => (
-          <MobileElevationSlide key={ i } src={ src } />
-        )) }
-      </Box>
-    );
-  }
 
   return (
     <Box
