@@ -4,3 +4,4 @@ export { ProductShowcase } from './ProductShowcase.jsx';
 export { HeroSection } from './HeroSection.jsx';
 export { BrandValueSection } from './BrandValueSection.jsx';
 export { TopSection } from './TopSection.jsx';
+export { BrandElevationSection } from './BrandElevationSection.jsx';

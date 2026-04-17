@@ -30,8 +30,7 @@ FloatingTimelineControl로 검증 가능.
   argTypes: {
     height: {
       control: 'text',
-      description: '히어로 전체 높이 (CSS 단위 문자열)',
-      table: { defaultValue: { summary: '100vh' } },
+      description: '히어로 전체 높이 (CSS 단위 문자열). 미지정 시 이미지 원본 비율로 자동',
     },
     borderColor: {
       control: 'text',
@@ -42,9 +41,18 @@ FloatingTimelineControl로 검증 가능.
 };
 
 /**
- * 기본 — 뷰포트 전체 높이(100vh) 히어로.
+ * 기본 — 이미지 원본 비율 유지. 크롭 없음, 셀 높이는 이미지 자연 높이로 결정.
  */
 export const Default = {
+  args: {
+    borderColor: 'text.primary',
+  },
+};
+
+/**
+ * FixedViewport — 100vh 고정 높이 히어로. 이미지는 cover로 크롭될 수 있다.
+ */
+export const FixedViewport = {
   args: {
     height: '100vh',
     borderColor: 'text.primary',
@@ -52,7 +60,7 @@ export const Default = {
 };
 
 /**
- * Contained — 80vh 높이로 축소해 다른 섹션과의 조합을 가늠.
+ * Contained — 80vh 고정 높이로 축소해 다른 섹션과의 조합을 가늠.
  */
 export const Contained = {
   args: {

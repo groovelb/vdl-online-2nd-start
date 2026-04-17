@@ -5,11 +5,18 @@ import Box from '@mui/material/Box';
  * VideoScrubbing Component
  * 스크롤 위치에 따라 비디오를 프레임 단위로 재생(스크러빙)하는 컴포넌트입니다.
  *
+ * 제어 모드:
+ * 1. **Scroll 모드 (기본)** — progress prop 미지정 시 내부 scrollY 기반으로 자동 스크럽.
+ * 2. **External Progress 모드** — progress (0~1) 지정 시 외부 진행도로 currentTime 직접 제어.
+ *    HorizontalScrollContainer처럼 window.scrollY가 무의미한 상위 컨테이너 내부에서 사용.
+ *
  * @param {string} src - 비디오 소스 경로 [Required]
- * @param {React.RefObject} containerRef - 스크롤 추적용 컨테이너 요소 [Optional]
+ * @param {React.RefObject} containerRef - 스크롤 추적용 컨테이너 요소 (Scroll 모드) [Optional]
  * @param {Object} sx - MUI sx 스타일 [Optional]
- * @param {Object} scrollRange - 스크롤 범위 매핑 { start: 0, end: 1 } [Optional]
+ * @param {Object} scrollRange - 스크롤 범위 매핑 { start: 0, end: 1 } (Scroll 모드) [Optional]
  * @param {function} onProgressChange - 진행도 변경 콜백 (progress: 0-1) [Optional]
+ * @param {number} progress - 외부 진행도 (0~1). 지정 시 External Progress 모드로 전환 [Optional]
+ * @param {string} preload - 비디오 preload 속성 ('auto' | 'metadata' | 'none') [Optional, 기본값: 'auto']
  */
 const VideoScrubbing = ({
   src,
@@ -17,10 +24,13 @@ const VideoScrubbing = ({
   sx = {},
   scrollRange = { start: 0, end: 1 },
   onProgressChange,
+  progress,
+  preload = 'auto',
   ...props
 }) => {
   const videoRef = useRef(null);
   const [isInView, setIsInView] = useState(false);
+  const isExternalProgress = progress !== undefined;
 
   // Initialize video to frame 0 on load
   useEffect(() => {
@@ -42,9 +52,36 @@ const VideoScrubbing = ({
     };
   }, []);
 
+  // External progress 모드: progress 변화에 따라 currentTime 직접 업데이트
   useEffect(() => {
+    if (!isExternalProgress) return;
     const video = videoRef.current;
     if (!video) return;
+
+    const apply = () => {
+      if (!video.duration) return;
+      const p = Math.max(0, Math.min(1, progress));
+      const targetTime = video.duration * p;
+      if (Math.abs(video.currentTime - targetTime) > 0.033) {
+        video.currentTime = targetTime;
+      }
+      onProgressChange?.(p);
+    };
+
+    if (video.readyState >= 1) {
+      apply();
+    } else {
+      const handler = () => apply();
+      video.addEventListener('loadedmetadata', handler);
+      return () => video.removeEventListener('loadedmetadata', handler);
+    }
+    return undefined;
+  }, [progress, isExternalProgress, onProgressChange]);
+
+  useEffect(() => {
+    if (isExternalProgress) return undefined;
+    const video = videoRef.current;
+    if (!video) return undefined;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -56,11 +93,12 @@ const VideoScrubbing = ({
     observer.observe(video);
 
     return () => observer.disconnect();
-  }, []);
+  }, [isExternalProgress]);
 
   useEffect(() => {
+    if (isExternalProgress) return undefined;
     const video = videoRef.current;
-    if (!video || !isInView) return;
+    if (!video || !isInView) return undefined;
 
     let animationFrameId = null;
     let lastScrollTime = 0;
@@ -130,7 +168,7 @@ const VideoScrubbing = ({
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isInView, containerRef, scrollRange, onProgressChange]);
+  }, [isInView, containerRef, scrollRange, onProgressChange, isExternalProgress]);
 
   return (
     <Box
@@ -146,7 +184,7 @@ const VideoScrubbing = ({
         ref={videoRef}
         muted
         playsInline
-        preload="auto"
+        preload={preload}
         sx={{
           width: '100%',
           height: 'auto',

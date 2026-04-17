@@ -45,6 +45,7 @@ const DEFAULT_CATEGORIES = [
  * @param {object} columns - 그리드 브레이크포인트별 열 수 [Optional, 기본값: { xs: 2, sm: 3, md: 3, lg: 4 }]
  * @param {number} centerSize - 중앙 콘텐츠 그리드 크기 (1-12) [Optional, 기본값: 8]
  * @param {number} stickyTop - aside sticky 위치 (px) [Optional, 기본값: 88]
+ * @param {number} spacing - aside ↔ center 그리드 간격 (MUI spacing 단위, 1=8px) [Optional, 기본값: 0.5]
  * @param {string} layoutIdPrefix - Shared Element 전이용 layoutId 접두사 [Optional]
  * @param {function} onProductClick - 카드 클릭 핸들러. (product) => void [Optional]
  * @param {function} onFilterChange - 필터 변경 핸들러. (typeId) => void [Optional]
@@ -62,6 +63,7 @@ const ProductShowcase = forwardRef(function ProductShowcase({
   columns = { xs: 2, sm: 3, md: 3, lg: 4 },
   centerSize = 8,
   stickyTop = 88,
+  spacing = 0.5,
   layoutIdPrefix,
   onProductClick,
   onFilterChange,
@@ -88,6 +90,7 @@ const ProductShowcase = forwardRef(function ProductShowcase({
       ref={ ref }
       centerSize={ centerSize }
       stickyTop={ stickyTop }
+      spacing={ spacing }
       sx={ sx }
       { ...props }
       aside={

@@ -15,6 +15,7 @@ import { GNB } from '../navigation/GNB';
  * @param {node} drawerHeader - 드로어 상단 커스텀 요소 [Optional]
  * @param {node} drawerFooter - 드로어 하단 커스텀 요소 [Optional]
  * @param {node} children - 메인 콘텐츠 영역 [Required]
+ * @param {node} footer - 하단 Footer 영역 [Optional]
  * @param {string} breakpoint - 반응형 전환 브레이크포인트 ('sm' | 'md' | 'lg') [Optional, 기본값: 'md']
  * @param {number} headerHeight - 헤더 높이 (px) [Optional, 기본값: 64]
  * @param {number} drawerWidth - 드로어 너비 (px) [Optional, 기본값: 280]
@@ -40,6 +41,7 @@ const AppShell = forwardRef(function AppShell({
   drawerHeader,
   drawerFooter,
   children,
+  footer,
   breakpoint = 'md',
   headerHeight = 64,
   drawerWidth = 280,
@@ -86,6 +88,9 @@ const AppShell = forwardRef(function AppShell({
       >
         {children}
       </Box>
+
+      {/* Footer */}
+      {footer}
     </Box>
   );
 });

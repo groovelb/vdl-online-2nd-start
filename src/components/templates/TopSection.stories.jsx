@@ -29,8 +29,7 @@ Time of Day로 자동 반응한다.
   argTypes: {
     heroHeight: {
       control: 'text',
-      description: 'HeroSection 높이 (CSS 단위 문자열)',
-      table: { defaultValue: { summary: '100vh' } },
+      description: 'HeroSection 높이 (CSS 단위 문자열). 미지정 시 이미지 원본 비율로 자동',
     },
     borderColor: {
       control: 'text',
@@ -45,21 +44,20 @@ Time of Day로 자동 반응한다.
 };
 
 /**
- * 기본 — Hero 100vh + BrandValueSection.
+ * 기본 — Hero는 이미지 원본 비율로 자동 + BrandValueSection. 크롭 없음.
  */
 export const Default = {
   args: {
-    heroHeight: '100vh',
     borderColor: 'text.primary',
   },
 };
 
 /**
- * ShorterHero — 히어로 비중을 줄여 스크롤 없이 브랜드 가치가 빠르게 드러나도록.
+ * FixedHero — Hero 높이를 100vh로 고정 (이미지 cover 크롭 발생 가능).
  */
-export const ShorterHero = {
+export const FixedHero = {
   args: {
-    heroHeight: '80vh',
+    heroHeight: '100vh',
     borderColor: 'text.primary',
   },
 };

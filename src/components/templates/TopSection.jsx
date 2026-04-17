@@ -12,27 +12,27 @@ import { BrandValueSection } from './BrandValueSection';
  * 3열 라인으로 이어지는 "하나의 그리드 판"을 연출한다.
  *
  * 레이아웃:
- * 1. HeroSection (height 기본 100vh) — 2:1 수평 분할 + 브랜드 타이틀 오버레이
+ * 1. HeroSection (기본: 이미지 원본 비율 유지) — 2:1 수평 분할 + 브랜드 타이틀 오버레이
  * 2. 1px Horizontal Divider (LineGrid stack mode가 자동 삽입)
  * 3. BrandValueSection — 3열 브랜드 가치 카드
  *
  * 동작 방식:
  * 1. LineGrid에 container prop을 주지 않으면 Stack 모드로 동작 (Divider 자동 삽입).
  * 2. borderColor는 두 섹션 모두 동일 토큰으로 묶여 테마 전환 시 동시 반전된다.
- * 3. heroHeight로 히어로 높이를 조절해 뷰포트 대비 비중을 바꿀 수 있다.
+ * 3. heroHeight 미지정 시 HeroSection이 원본 이미지 비율로 자연 높이 렌더, 지정 시 해당 높이로 고정.
  *
  * Props:
- * @param {string} heroHeight - HeroSection 높이 (CSS 단위 문자열) [Optional, 기본값: '100vh']
+ * @param {string} heroHeight - HeroSection 높이 (CSS 단위 문자열). 미지정 시 이미지 원본 비율로 자동 [Optional]
  * @param {string} borderColor - 모든 LineGrid 라인 색상 토큰 [Optional, 기본값: 'text.primary']
  * @param {array} features - BrandValueSection에 전달할 브랜드 가치 항목 배열 [Optional]
  * @param {object} sx - 외곽 래퍼 추가 스타일 [Optional]
  *
  * Example usage:
- * <TopSection />
- * <TopSection heroHeight="90vh" borderColor="divider" />
+ * <TopSection />                        // 히어로는 이미지 원본 비율로 렌더
+ * <TopSection heroHeight="100vh" />     // 히어로 높이 고정 (cover 크롭 발생 가능)
  */
 const TopSection = forwardRef(function TopSection({
-  heroHeight = '100vh',
+  heroHeight,
   borderColor = 'text.primary',
   features,
   sx,
