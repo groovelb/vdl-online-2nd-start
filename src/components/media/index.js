@@ -14,6 +14,9 @@ export { ImageTransition } from './ImageTransition.jsx';
 // ImageCarousel - 이미지 캐러셀 + 인디케이터
 export { ImageCarousel } from './ImageCarousel.jsx';
 
+// TimeBlendImage - Day/Night 이미지 쌍 시간 블렌드 (TimelineContext 구독)
+export { TimeBlendImage } from './TimeBlendImage.jsx';
+
 // Indicator - 범용 인디케이터 (common/ui에서 재노출)
 export { Indicator } from '../../common/ui/Indicator.jsx';
 

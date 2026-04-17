@@ -4,8 +4,7 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import { motion } from 'framer-motion';
 import { SPACING } from '../../styles/tokens';
-import { useTimelineSafe } from '../../contexts/TimelineContext';
-import { smoothstep } from '../../utils/timeBlend';
+import { TimeBlendImage } from '../media/TimeBlendImage';
 
 const MotionBox = motion(Box);
 
@@ -19,12 +18,13 @@ const MotionBox = motion(Box);
  *
  * 동작 방식:
  * 1. product 객체를 받거나 개별 필드(title/type/lux/kelvin/images)를 받는다.
- * 2. images[0]=Day, images[1]=Night 규약. timeValue(0~1)에 smoothstep을 적용해 Night 오버레이 opacity로 보간.
- * 3. timeValue에 연동된 brightness/saturate filter가 media wrapper에 걸려 밤이 깊어질수록 공간이 살짝 가라앉는다.
- * 4. 시간대 간 전환은 duration.slowest(1200ms)·easing.smooth를 사용해 "시간이 흐르는" 리듬을 낸다.
- * 5. layoutId가 있으면 motion.div로 렌더하여 Framer Motion Shared Element 전이에 참여.
- * 6. isInteractive일 때 hover 시 이미지 scale 1.03 (GPU 가속 transform만 사용).
- * 7. prefers-reduced-motion: reduce 시 모든 transition 미적용 (값만 즉시 반영).
+ * 2. 이미지 영역은 **TimeBlendImage**(`media/TimeBlendImage.jsx`)에 위임. Day/Night 블렌드
+ *    공식(smoothstep + brightness/saturate filter + duration.slowest transition)은 해당
+ *    공용 컴포넌트가 단일 소스로 관리한다.
+ * 3. layoutId가 있으면 motion.div로 렌더하여 Framer Motion Shared Element 전이에 참여.
+ * 4. isInteractive일 때 hover 시 TimeBlendImage 내부 `.ls-time-blend-media`에 scale 1.03
+ *    transform 적용 (GPU 가속, transition은 TimeBlendImage가 이미 선언).
+ * 5. prefers-reduced-motion: reduce 시 모든 transition 미적용.
  *
  * Props:
  * @param {object} product - 제품 전체 객체 (id, title, type, lux, kelvin, images). 개별 필드보다 우선 [Optional]
@@ -59,13 +59,6 @@ const ProductCard = forwardRef(function ProductCard({
   ...props
 }, ref) {
   /**
-   * timeValue 우선순위: prop > TimelineContext > 0.
-   * Provider 밖(격리 렌더/테스트)에서도 안전하게 동작한다.
-   */
-  const timelineCtx = useTimelineSafe();
-  const effectiveTimeValue = timeValue ?? timelineCtx?.timeValue ?? 0;
-
-  /**
    * product 객체가 주어지면 내부 필드를 우선 사용. 개별 prop은 fallback.
    */
   const resolved = useMemo(() => ({
@@ -78,19 +71,6 @@ const ProductCard = forwardRef(function ProductCard({
 
   const dayImage = resolved.images?.[0];
   const nightImage = resolved.images?.[1] ?? dayImage;
-  /**
-   * smoothstep(timeValue) → Night 이미지 opacity.
-   * 사이트 전역 배경의 lerpHex도 같은 값을 섞는 비율로 써서 카드와 배경의
-   * 블렌드 비율이 모든 슬롯에서 일치한다.
-   */
-  const nightOpacity = smoothstep(effectiveTimeValue);
-
-  /**
-   * 시간이 깊어질수록 공간 전체가 살짝 가라앉는 감각을 주기 위해
-   * brightness/saturate를 nightOpacity에 연동한다. Immanence 원칙상
-   * 과장 금지 — Day(1.0, 1.0) → Night(0.92, 0.90).
-   */
-  const mediaFilter = `brightness(${ (1 - 0.08 * nightOpacity).toFixed(3) }) saturate(${ (1 - 0.10 * nightOpacity).toFixed(3) })`;
 
   /**
    * 빛 메타 ('260LX · 3200K')
@@ -123,14 +103,8 @@ const ProductCard = forwardRef(function ProductCard({
         color: 'text.primary',
         backgroundColor: 'transparent',
         '@media (prefers-reduced-motion: no-preference)': {
-          '& .product-card-media-inner': {
-            transition: (theme) => `transform ${ theme.transitions.duration.slow }ms ${ theme.transitions.easing.smooth }, filter ${ theme.transitions.duration.slowest }ms ${ theme.transitions.easing.smooth }`,
-          },
-          '& .product-card-night-layer': {
-            transition: (theme) => `opacity ${ theme.transitions.duration.slowest }ms ${ theme.transitions.easing.smooth }`,
-          },
           ...(isInteractive && {
-            '&:hover .product-card-media-inner': {
+            '&:hover .ls-time-blend-media': {
               transform: 'scale(1.03)',
             },
           }),
@@ -138,60 +112,13 @@ const ProductCard = forwardRef(function ProductCard({
         ...sx,
       } }
     >
-      <Box
-        sx={ {
-          position: 'relative',
-          width: '100%',
-          aspectRatio: ratio,
-          overflow: 'hidden',
-          backgroundColor: 'grey.100',
-        } }
-      >
-        <Box
-          className="product-card-media-inner"
-          sx={ {
-            position: 'absolute',
-            inset: 0,
-            willChange: 'transform, filter',
-            filter: mediaFilter,
-          } }
-        >
-          { dayImage && (
-            <Box
-              component="img"
-              src={ dayImage }
-              alt={ resolved.title ? `${ resolved.title } — day` : '' }
-              sx={ {
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
-              } }
-            />
-          ) }
-          { nightImage && nightImage !== dayImage && (
-            <Box
-              component="img"
-              className="product-card-night-layer"
-              src={ nightImage }
-              alt=""
-              aria-hidden="true"
-              sx={ {
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
-                opacity: nightOpacity,
-                willChange: 'opacity',
-              } }
-            />
-          ) }
-        </Box>
-      </Box>
+      <TimeBlendImage
+        dayImage={ dayImage }
+        nightImage={ nightImage }
+        alt={ resolved.title ? `${ resolved.title } — day` : '' }
+        ratio={ ratio }
+        timeValue={ timeValue }
+      />
 
       <Box
         sx={ {
