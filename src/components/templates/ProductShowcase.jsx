@@ -40,7 +40,7 @@ const DEFAULT_CATEGORIES = [
  * @param {array} products - 제품 객체 배열 [Required]
  * @param {array} categories - 커스텀 필터 카테고리 [{ id, label }]. id는 product.type 또는 'all' [Optional, 기본값: PRODUCT_TYPES 기반]
  * @param {string} defaultType - 초기 선택 타입 id [Optional, 기본값: 'all']
- * @param {number} timeValue - 시간 값 0(Day)~1(Night). ProductGrid로 전파 [Optional, 기본값: 0]
+ * @param {number} timeValue - 시간 값 0(Day)~1(Night). ProductGrid로 전파. 미지정 시 각 ProductCard가 TimelineContext에서 자동 구독 [Optional]
  * @param {string} ratio - 카드 이미지 비율 [Optional, 기본값: '4/5']
  * @param {object} columns - 그리드 브레이크포인트별 열 수 [Optional, 기본값: { xs: 2, sm: 3, md: 3, lg: 4 }]
  * @param {number} centerSize - 중앙 콘텐츠 그리드 크기 (1-12) [Optional, 기본값: 8]
@@ -57,7 +57,7 @@ const ProductShowcase = forwardRef(function ProductShowcase({
   products,
   categories = DEFAULT_CATEGORIES,
   defaultType = 'all',
-  timeValue = 0,
+  timeValue,
   ratio = '4/5',
   columns = { xs: 2, sm: 3, md: 3, lg: 4 },
   centerSize = 8,

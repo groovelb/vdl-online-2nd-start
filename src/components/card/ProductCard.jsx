@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import { motion } from 'framer-motion';
 import { SPACING } from '../../styles/tokens';
+import { useTimelineSafe } from '../../contexts/TimelineContext';
 
 const MotionBox = motion(Box);
 
@@ -46,7 +47,7 @@ const toNightOpacity = (value) => {
  * @param {number} lux - 조도 값 [Optional]
  * @param {number} kelvin - 색온도 (K) [Optional]
  * @param {array} images - [DayImage, NightImage] 쌍 [Optional]
- * @param {number} timeValue - 시간 값 0(Day)~1(Night) [Optional, 기본값: 0]
+ * @param {number} timeValue - 시간 값 0(Day)~1(Night). 미지정 시 TimelineContext의 timeValue를 구독, 그것도 없으면 0 [Optional]
  * @param {string} ratio - 이미지 비율 ('4/5' | '1/1' | '3/4' | '16/9') [Optional, 기본값: '4/5']
  * @param {string} layoutId - Framer Motion Shared Element 식별자 [Optional]
  * @param {boolean} isInteractive - hover 인터랙션 활성화 [Optional, 기본값: true]
@@ -63,7 +64,7 @@ const ProductCard = forwardRef(function ProductCard({
   lux,
   kelvin,
   images,
-  timeValue = 0,
+  timeValue,
   ratio = '4/5',
   layoutId,
   isInteractive = true,
@@ -71,6 +72,13 @@ const ProductCard = forwardRef(function ProductCard({
   sx,
   ...props
 }, ref) {
+  /**
+   * timeValue 우선순위: prop > TimelineContext > 0.
+   * Provider 밖(격리 렌더/테스트)에서도 안전하게 동작한다.
+   */
+  const timelineCtx = useTimelineSafe();
+  const effectiveTimeValue = timeValue ?? timelineCtx?.timeValue ?? 0;
+
   /**
    * product 객체가 주어지면 내부 필드를 우선 사용. 개별 prop은 fallback.
    */
@@ -84,7 +92,7 @@ const ProductCard = forwardRef(function ProductCard({
 
   const dayImage = resolved.images?.[0];
   const nightImage = resolved.images?.[1] ?? dayImage;
-  const nightOpacity = toNightOpacity(timeValue);
+  const nightOpacity = toNightOpacity(effectiveTimeValue);
 
   /**
    * 시간이 깊어질수록 공간 전체가 살짝 가라앉는 감각을 주기 위해

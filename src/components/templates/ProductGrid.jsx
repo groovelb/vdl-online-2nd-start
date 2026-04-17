@@ -69,7 +69,7 @@ const toGridTemplate = (columns) =>
  * @param {array} products - 제품 객체 배열 [Required]
  * @param {object} columns - 브레이크포인트별 열 수. 예: { xs: 2, sm: 3, md: 4, lg: 5 } [Optional, 기본값: { xs: 2, sm: 3, md: 4, lg: 5 }]
  * @param {string} gap - 카드 사이 간격 ('xs' | 'sm' | 'md' | 'lg' | 'xl') [Optional, 기본값: 'md']
- * @param {number} timeValue - 시간 값 0(Day)~1(Night). 모든 카드에 전파 [Optional, 기본값: 0]
+ * @param {number} timeValue - 시간 값 0(Day)~1(Night). 모든 카드에 전파. 미지정 시 각 ProductCard가 TimelineContext에서 자동 구독 [Optional]
  * @param {string} ratio - 이미지 비율 [Optional, 기본값: '4/5']
  * @param {function} onProductClick - 카드 클릭 핸들러. (product) => void [Optional]
  * @param {string} layoutIdPrefix - Shared Element 전이용 layoutId 접두사 [Optional]
@@ -82,7 +82,7 @@ const ProductGrid = forwardRef(function ProductGrid({
   products,
   columns = { xs: 2, sm: 3, md: 4, lg: 5 },
   gap = 'md',
-  timeValue = 0,
+  timeValue,
   ratio = '4/5',
   onProductClick,
   layoutIdPrefix,

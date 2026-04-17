@@ -1,7 +1,4 @@
-import { useState } from 'react';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Slider from '@mui/material/Slider';
 import { ProductShowcase } from './ProductShowcase';
 import { products } from '../../data/products';
 
@@ -26,7 +23,8 @@ Lumenstate 랜딩의 **Product Showcase Section** 템플릿.
 - **우측**: aside와 대칭인 빈 영역 (시각적 균형)
 
 ### 시간 공유 / 전이
-- \`timeValue\` (0~1): 중앙 그리드의 모든 카드가 같은 시각을 공유
+- 모든 스토리는 Storybook toolbar의 **Time of Day**(점심/오후/저녁/밤)로만 제어. 그리드 전 카드가 같은 시각을 자동 공유.
+- \`timeValue\` prop은 옵션 — 명시 시 context를 덮어쓴다.
 - \`layoutIdPrefix\`: 각 카드에 Shared Element 전이 식별자 부여
         `,
       },
@@ -84,12 +82,13 @@ Lumenstate 랜딩의 **Product Showcase Section** 템플릿.
 
 /**
  * 기본 — 전체 제품(20개) + vertical 필터. 필터 클릭 시 해당 타입만 남는다.
+ * timeValue를 args로 주지 않으므로 Storybook toolbar의 Time of Day가
+ * 각 ProductCard의 TimelineContext를 통해 자동 반영된다.
  */
 export const Default = {
   args: {
     products,
     defaultType: 'all',
-    timeValue: 0,
     ratio: '4/5',
     columns: { xs: 2, sm: 3, md: 3, lg: 4 },
     centerSize: 8,
@@ -100,34 +99,6 @@ export const Default = {
       <ProductShowcase { ...args } />
     </Box>
   ),
-};
-
-/**
- * With Timeline — 전역 타임라인 슬라이더로 필터링된 그리드 전체의 시각을 동기화.
- */
-export const WithTimeline = {
-  render: () => {
-    const [time, setTime] = useState(0);
-
-    return (
-      <Box sx={ { display: 'flex', flexDirection: 'column', gap: 4, minHeight: '120vh' } }>
-        <Box sx={ { maxWidth: 360, alignSelf: 'flex-end' } }>
-          <Typography variant="overline" sx={ { color: 'text.secondary' } }>
-            Global Time — { time < 0.5 ? 'Day' : 'Night' } ({ time.toFixed(2) })
-          </Typography>
-          <Slider
-            value={ time }
-            min={ 0 }
-            max={ 1 }
-            step={ 0.01 }
-            onChange={ (_, v) => setTime(Array.isArray(v) ? v[0] : v) }
-            sx={ { color: 'primary.main' } }
-          />
-        </Box>
-        <ProductShowcase products={ products } timeValue={ time } />
-      </Box>
-    );
-  },
 };
 
 /**

@@ -138,12 +138,30 @@ const palette = {
   // Lumenstate 커스텀 토큰
   brand: BRAND_COLORS,
 
-  // 시간대별 배경색 토큰 (Day<>Night 4등분 선형 보간)
+  // 시간대별 공간 톤 토큰 ({ bg, fg, muted } 동일 스키마)
+  // - 라이트 테마에서도 저녁/밤 슬롯의 공간 nuance를 제공하지만,
+  //   실제 앱은 해당 슬롯에서 darkTheme로 스위칭됨.
   timeline: {
-    noon: '#E8E5E1',      // 12pm
-    afternoon: '#A19F9B',  // 4pm (선형 보간)
-    evening: '#595654',    // 8pm (선형 보간)
-    midnight: '#12100E',   // 12am
+    noon: {
+      bg: '#E8E5E1',
+      fg: '#12100E',
+      muted: `#12100ECC`,
+    },
+    afternoon: {
+      bg: '#A19F9B',
+      fg: '#12100E',
+      muted: `#12100EB3`,
+    },
+    evening: {
+      bg: '#595654',
+      fg: '#F2E9DA',
+      muted: `#F2E9DACC`,
+    },
+    midnight: {
+      bg: '#12100E',
+      fg: '#F2E9DA',
+      muted: `#F2E9DACC`,
+    },
   },
 
   contrastThreshold: 3,
@@ -408,6 +426,10 @@ const components = {
       body: {
         scrollbarWidth: 'thin',
         backgroundColor: BRAND_COLORS.wallTintWhite,
+        color: BRAND_COLORS.warmBlack,
+        '@media (prefers-reduced-motion: no-preference)': {
+          transition: 'background-color 1200ms cubic-bezier(0.37, 0, 0.63, 1), color 1200ms cubic-bezier(0.37, 0, 0.63, 1)',
+        },
       },
     },
   },
