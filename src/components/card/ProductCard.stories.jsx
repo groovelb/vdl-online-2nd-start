@@ -3,8 +3,11 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
 import Grid from '@mui/material/Grid';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { ProductCard } from './ProductCard';
 import { products } from '../../data/products';
+import { TIME_SLOTS } from '../../data/timeSlots';
 
 export default {
   title: 'Component/3. Card/ProductCard',
@@ -135,33 +138,39 @@ export const TimeBlend = {
 
 /**
  * Product Showcase Grid — products.js 데이터로 제품 쇼케이스 섹션 시뮬레이션.
- * 한 슬라이더가 그리드 전체를 같은 시각으로 묶는다 (전역 시간 공유 감각).
+ * 4개 시간대(점심 12시 · 오후 16시 · 저녁 20시 · 밤 24시) 토글로 그리드 전체의
+ * 시각을 동시에 전환. 슬롯 간 전환은 1200ms easing.smooth로 "시간이 흐르는" 리듬.
  */
 export const ShowcaseGrid = {
   parameters: { layout: 'padded' },
   render: () => {
-    const [time, setTime] = useState(0);
+    const [slotId, setSlotId] = useState(TIME_SLOTS[0].id);
+    const slot = TIME_SLOTS.find((s) => s.id === slotId) ?? TIME_SLOTS[0];
     const sample = products.slice(0, 8);
 
     return (
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 4 } }>
-        <Box sx={ { maxWidth: 320 } }>
-          <Typography variant="overline" sx={ { color: 'text.secondary' } }>
-            Global Time — { time.toFixed(2) }
+        <Box>
+          <Typography variant="overline" sx={ { color: 'text.secondary', display: 'block', mb: 1 } }>
+            Time of Day — { slot.hour }:00 · timeValue { slot.timeValue.toFixed(2) }
           </Typography>
-          <Slider
-            value={ time }
-            min={ 0 }
-            max={ 1 }
-            step={ 0.01 }
-            onChange={ (_, v) => setTime(Array.isArray(v) ? v[0] : v) }
-            sx={ { color: 'primary.main' } }
-          />
+          <ToggleButtonGroup
+            value={ slotId }
+            exclusive
+            onChange={ (_, v) => v && setSlotId(v) }
+            size="small"
+          >
+            { TIME_SLOTS.map((s) => (
+              <ToggleButton key={ s.id } value={ s.id } sx={ { textTransform: 'none', px: 2 } }>
+                { s.label } { s.hour }:00
+              </ToggleButton>
+            )) }
+          </ToggleButtonGroup>
         </Box>
         <Grid container spacing={ 4 }>
           { sample.map((p) => (
             <Grid key={ p.id } size={ { xs: 6, md: 3 } }>
-              <ProductCard product={ p } timeValue={ time } />
+              <ProductCard product={ p } timeValue={ slot.timeValue } />
             </Grid>
           )) }
         </Grid>

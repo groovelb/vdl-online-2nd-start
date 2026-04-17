@@ -1,4 +1,6 @@
 import { forwardRef, useMemo, useState } from 'react';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import StickyAsideCenterLayout from '../layout/StickyAsideCenterLayout';
 import { CategoryTab } from '../in-page-navigation/CategoryTab';
 import { ProductGrid } from './ProductGrid';
@@ -22,7 +24,9 @@ const DEFAULT_CATEGORIES = [
  * 중앙에 ProductGrid를 배치한 3열 레이아웃이다.
  *
  * 구성:
- * - 좌측 aside: CategoryTab(vertical)로 type 필터 (all / ceiling / stand / wall / desk)
+ * - 좌측 aside: CategoryTab으로 type 필터 (all / ceiling / stand / wall / desk)
+ *   - 데스크톱(md 이상): vertical 방향, sticky
+ *   - 모바일(md 미만): horizontal 방향, 상단에 스택되어 가로 스크롤 탭으로 노출
  * - 중앙 content: 선택된 type으로 필터링된 ProductGrid
  * - 우측: StickyAsideCenterLayout의 대칭 빈 영역
  *
@@ -30,7 +34,7 @@ const DEFAULT_CATEGORIES = [
  * 1. 내부 state로 selected type 관리. defaultType을 초기값으로 사용.
  * 2. 'all' 선택 시 전체 products, 그 외에는 product.type === selected로 필터.
  * 3. timeValue / layoutIdPrefix / onProductClick은 ProductGrid로 그대로 전파.
- * 4. 모바일(md 미만)에서는 aside(필터)가 상단으로 스택, 그리드가 하단으로 내려간다.
+ * 4. useMediaQuery(md 미만)로 orientation을 horizontal로 전환한다.
  *
  * Props:
  * @param {array} products - 제품 객체 배열 [Required]
@@ -65,6 +69,8 @@ const ProductShowcase = forwardRef(function ProductShowcase({
   ...props
 }, ref) {
   const [selected, setSelected] = useState(defaultType);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const filteredProducts = useMemo(() => {
     if (!Array.isArray(products)) return [];
@@ -86,7 +92,7 @@ const ProductShowcase = forwardRef(function ProductShowcase({
       { ...props }
       aside={
         <CategoryTab
-          orientation="vertical"
+          orientation={ isMobile ? 'horizontal' : 'vertical' }
           categories={ categories }
           selected={ selected }
           onChange={ handleChange }

@@ -10,12 +10,16 @@ const MotionBox = motion(Box);
 /**
  * 시간 값(0~1)을 Night 이미지의 opacity로 변환.
  * Day 이미지는 항상 베이스, Night 이미지를 위에 얹어 투명도 전환.
+ *
+ * smoothstep(3x² - 2x³) ease-in-out 매핑으로 중간 구간(0.4~0.6)에서
+ * 두 이미지가 50/50으로 겹쳐 보이는 시간을 줄여 "흐릿한 더블 노출"을
+ * 피한다. 같은 timeValue=0.5라도 선형보다 한쪽이 살짝 더 지배적이게 보인다.
  */
 const toNightOpacity = (value) => {
   if (typeof value !== 'number') return 0;
   if (value <= 0) return 0;
   if (value >= 1) return 1;
-  return value;
+  return value * value * (3 - 2 * value);
 };
 
 /**
@@ -28,10 +32,12 @@ const toNightOpacity = (value) => {
  *
  * 동작 방식:
  * 1. product 객체를 받거나 개별 필드(title/type/lux/kelvin/images)를 받는다.
- * 2. images[0]=Day, images[1]=Night 규약. timeValue(0~1)로 Night 오버레이 opacity를 보간.
- * 3. layoutId가 있으면 motion.div로 렌더하여 Framer Motion Shared Element 전이에 참여.
- * 4. isInteractive일 때 hover 시 이미지 scale 1.03 (GPU 가속 transform만 사용).
- * 5. prefers-reduced-motion이 true면 transition을 제거한다.
+ * 2. images[0]=Day, images[1]=Night 규약. timeValue(0~1)에 smoothstep을 적용해 Night 오버레이 opacity로 보간.
+ * 3. timeValue에 연동된 brightness/saturate filter가 media wrapper에 걸려 밤이 깊어질수록 공간이 살짝 가라앉는다.
+ * 4. 시간대 간 전환은 duration.slowest(1200ms)·easing.smooth를 사용해 "시간이 흐르는" 리듬을 낸다.
+ * 5. layoutId가 있으면 motion.div로 렌더하여 Framer Motion Shared Element 전이에 참여.
+ * 6. isInteractive일 때 hover 시 이미지 scale 1.03 (GPU 가속 transform만 사용).
+ * 7. prefers-reduced-motion: reduce 시 모든 transition 미적용 (값만 즉시 반영).
  *
  * Props:
  * @param {object} product - 제품 전체 객체 (id, title, type, lux, kelvin, images). 개별 필드보다 우선 [Optional]
@@ -81,6 +87,13 @@ const ProductCard = forwardRef(function ProductCard({
   const nightOpacity = toNightOpacity(timeValue);
 
   /**
+   * 시간이 깊어질수록 공간 전체가 살짝 가라앉는 감각을 주기 위해
+   * brightness/saturate를 nightOpacity에 연동한다. Immanence 원칙상
+   * 과장 금지 — Day(1.0, 1.0) → Night(0.92, 0.90).
+   */
+  const mediaFilter = `brightness(${ (1 - 0.08 * nightOpacity).toFixed(3) }) saturate(${ (1 - 0.10 * nightOpacity).toFixed(3) })`;
+
+  /**
    * 빛 메타 ('260LX · 3200K')
    */
   const metaText = useMemo(() => {
@@ -112,7 +125,10 @@ const ProductCard = forwardRef(function ProductCard({
         backgroundColor: 'transparent',
         '@media (prefers-reduced-motion: no-preference)': {
           '& .product-card-media-inner': {
-            transition: (theme) => `transform ${ theme.transitions.duration.slow }ms ${ theme.transitions.easing.smooth }`,
+            transition: (theme) => `transform ${ theme.transitions.duration.slow }ms ${ theme.transitions.easing.smooth }, filter ${ theme.transitions.duration.slowest }ms ${ theme.transitions.easing.smooth }`,
+          },
+          '& .product-card-night-layer': {
+            transition: (theme) => `opacity ${ theme.transitions.duration.slowest }ms ${ theme.transitions.easing.smooth }`,
           },
           ...(isInteractive && {
             '&:hover .product-card-media-inner': {
@@ -137,7 +153,8 @@ const ProductCard = forwardRef(function ProductCard({
           sx={ {
             position: 'absolute',
             inset: 0,
-            willChange: 'transform',
+            willChange: 'transform, filter',
+            filter: mediaFilter,
           } }
         >
           { dayImage && (
@@ -158,6 +175,7 @@ const ProductCard = forwardRef(function ProductCard({
           { nightImage && nightImage !== dayImage && (
             <Box
               component="img"
+              className="product-card-night-layer"
               src={ nightImage }
               alt=""
               aria-hidden="true"
@@ -169,7 +187,7 @@ const ProductCard = forwardRef(function ProductCard({
                 objectFit: 'cover',
                 display: 'block',
                 opacity: nightOpacity,
-                transition: (theme) => `opacity ${ theme.transitions.duration.slow }ms ${ theme.transitions.easing.smooth }`,
+                willChange: 'opacity',
               } }
             />
           ) }
